@@ -10,8 +10,9 @@
        (reduce max)))
 
 (comment
-  (def s (slurp (io/resource "day1/input.example.txt")))
-  (max-calories s))
+  (max-calories (slurp (io/resource "day1/input.example.txt"))) ;; => 24000
+  (max-calories (slurp (io/resource "day1/input.txt"))) ;; => 75622
+  )
 
 (defn -main
   [& args]
