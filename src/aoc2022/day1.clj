@@ -2,16 +2,27 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as str]))
 
-(defn max-calories [s]
+(defn parse-calories [s]
   (->> (str/split-lines s)
        (partition-by #(= % ""))
        (filter #(not= % '("")))
-       (map (fn [xs] (reduce + (map #(Integer/parseInt %) xs))))
-       (reduce max)))
+       (map (fn [xs] (reduce + (map #(Integer/parseInt %) xs))))))
+
+(defn max-calories [xs]
+  (reduce max xs))
+
+(defn top3 [xs]
+  (->> xs (sort >) (take 3) (reduce +)))
 
 (comment
-  (max-calories (slurp (io/resource "day1/input.example.txt"))) ;; => 24000
-  (max-calories (slurp (io/resource "day1/input.txt"))) ;; => 75622
+  (def test-data
+    (parse-calories (slurp (io/resource "day1/input.example.txt"))))
+  (max-calories test-data) ;; => 24000
+  (top3 test-data) ;; 45000
+
+  (def data (parse-calories (slurp (io/resource "day1/input.txt"))))
+  (max-calories data) ;; => 75622
+  (top3 data) ;; => 213159
   )
 
 (defn -main
