@@ -38,6 +38,11 @@
   (+ (selection-score y)
      (outcomes (win x y))))
 
+(defn total-score [turns]
+  (->> turns
+       (map score)
+       (reduce +)))
+
 (comment
   (def test-guide-input "A Y\nB X\nC Z")
   (def test-guide (parse-input test-guide-input))
@@ -47,4 +52,5 @@
           :outcome (outcomes (win x y))})
        test-guide)
   ;; => ({:score 2, :outcome 6} {:score 1, :outcome 0} {:score 3, :outcome 3})
+  (total-score test-guide) ;; => 15
   )
