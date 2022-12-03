@@ -59,3 +59,30 @@ CrZsJsPPZsGzwwsLwLmpwMDw")
   (total-priorities data) ;; => 7766 
   )
 
+;; part 2
+
+(defn get-bage [lines]
+  (->> lines (map set)
+       (apply sets/intersection)
+       only))
+
+(defn total-priorities2 [lines]
+  (->> lines (partition 3)
+       (map get-bage)
+       (map priority)
+       (reduce +)))
+
+(comment
+  (->> test-lines (partition 3) first)
+  ;; => ("vJrwpWtwJgWrhcsFMMfFFhFp"
+  ;;     "jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL"
+  ;;     "PmmdzqPrVvPwwTWBwg")
+
+  (->> test-lines (partition 3) first
+       (map set) (apply sets/intersection) only) ;; => \r
+  (->> test-lines (partition 3)
+       (map get-bage) (map priority)) ;; => (18 52)
+  (total-priorities2 test-lines) ;; => 70
+
+  (total-priorities2 data) ;; => 2415
+  )
