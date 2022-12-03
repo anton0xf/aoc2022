@@ -49,28 +49,13 @@ CrZsJsPPZsGzwwsLwLmpwMDw")
   (count (first test-lines)) ;; => 24
   (div "asdfgh")             ;; => ["asd" "fgh"]
   (div (first test-lines))   ;; => ["vJrwpWtwJgWr" "hcsFMMfFFhFp"]
-
-  (->> (div (first test-lines))
-       (map set)
-       (apply sets/intersection))
-  ;; => #{\p}
-
-  (map common test-lines)
-  ;; => (#{\p} #{\L} #{\P} #{\v} #{\t} #{\s})
-
-  (->> (map common test-lines)
-       (map first)
-       (map priority))
-  ;; => (16 38 42 22 20 19)
-
-  (->> (map common test-lines)
-       (map first)
-       (map priority)
-       (reduce +))
-  ;; => 157
-
+  (->> (div (first test-lines)) (map set) (apply sets/intersection)) ;; => #{\p}
+  (map common test-lines) ;; => (#{\p} #{\L} #{\P} #{\v} #{\t} #{\s})
+  (->> (map common test-lines) (map first) (map priority)) ;; => (16 38 42 22 20 19)
+  (->> (map common test-lines) (map first) (map priority) (reduce +)) ;; => 157
   (total-priorities (str/split-lines test-input)) ;; => 157
 
   (def data (str/split-lines (slurp (io/resource "day3/input.txt"))))
   (total-priorities data) ;; => 7766 
   )
+
