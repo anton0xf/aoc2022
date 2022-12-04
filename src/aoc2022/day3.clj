@@ -1,8 +1,7 @@
 (ns aoc2022.day3
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
-            [clojure.set :as sets]
-            [clojure.core.match :refer [match]]))
+            [clojure.set :as sets]))
 
 (defn div "divide string into two equal halfs" [s]
   (let [len (count s)
