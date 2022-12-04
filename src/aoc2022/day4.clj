@@ -27,11 +27,11 @@
 (defn bool2int [b] (if b 1 0))
 
 (defn score [datum]
-  (+ (bool2int (fully-contains datum))
-     (bool2int (fully-contains (reverse datum)))))
+  (bool2int (or (fully-contains datum)
+                (fully-contains (reverse datum)))))
 
 (defn total-score [data]
-  (->> data (map eval-both-directions) (reduce +)))
+  (->> data (map score) (reduce +)))
 
 (comment
   (def test-input
@@ -46,5 +46,5 @@
   (total-score test-data) ;; => 2
 
   (def data (parse-input (slurp (io/resource "day4/input.txt"))))
-  (total-score data) ;; => 567
+  (total-score data) ;; => 532
   )
