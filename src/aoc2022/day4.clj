@@ -48,3 +48,28 @@
   (def data (parse-input (slurp (io/resource "day4/input.txt"))))
   (total-score data) ;; => 532
   )
+
+;; part2
+;; In how many assignment pairs do the ranges overlap?
+
+(defn sort-datum [[[f1 :as r1] [f2 :as r2]]]
+  (if (<= f1 f2) [r1 r2] [r2 r1]))
+
+(defn overlap? [datum]
+  (let [[[_ t1] [f2 _]] (sort-datum datum)]
+    (<= f2 t1)))
+
+(defn total-score2 [data]
+  (->> data (map overlap?) (map bool2int) (reduce +)))
+
+(comment
+  (map sort-datum (take-last 2 test-data))
+  ;; => ([(4 6) (6 6)] [(2 6) (4 8)])
+
+  (map overlap? test-data)
+  ;; => (false false true true true true)
+
+  (total-score2 test-data) ;; => 4
+  (total-score2 data) ;; => 854
+  )
+
