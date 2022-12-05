@@ -31,18 +31,22 @@
     {:stacks (parse-stacks stacks-str)
      :commands (map parse-command (str/split-lines commands-str))}))
 
-(defn apply-command [stacks {count :count from :from to :to}]
-  (let [crates (take count (nth stacks from))]
-    (-> stacks
-        (update from #(drop count %))
-        (update to #(concat (reverse crates) %)))))
+(defn apply-command
+  ([stacks command] (apply-command stacks command reverse))
+  ([stacks {count :count from :from to :to} crates-fn]
+   (let [crates (take count (nth stacks from))]
+     (-> stacks
+         (update from #(drop count %))
+         (update to #(concat (crates-fn crates) %))))))
 
-(defn apply-commands [{stacks :stacks commands :commands}]
-  (loop [stacks stacks, commands commands]
-    (if (seq commands)
-      (recur (apply-command stacks (first commands))
-             (rest commands))
-      stacks)))
+(defn apply-commands
+  ([data] (apply-commands data reverse))
+  ([{stacks :stacks commands :commands} crates-fn]
+   (loop [stacks stacks, commands commands]
+     (if (seq commands)
+       (recur (apply-command stacks (first commands) crates-fn)
+              (rest commands))
+       stacks))))
 
 (defn get-top-of-stacks [stacks]
   (str/join (map first stacks)))
@@ -67,11 +71,19 @@
 
   (apply-command '[("N" "Z") ("D" "C" "M") ("P")]
                  {:count 2, :from 1, :to 0})
+  ;; => [("C" "D" "N" "Z") ("M") ("P")]
+
+  (apply-command '[("N" "Z") ("D" "C" "M") ("P")]
+                 {:count 2, :from 1, :to 0}
+                 identity)
   ;; => [("D" "C" "N" "Z") ("M") ("P")]
 
-  (get-top-of-stacks (apply-commands (parse-input test-input)))
+  (get-top-of-stacks (apply-commands (parse-input test-input))) ;; => "CMZ"
 
   (def data (parse-input (slurp (io/resource "day5/input.txt"))))
   (get-top-of-stacks (apply-commands data)) ;; => "HNSNMTLHQ"
+
+  (get-top-of-stacks (apply-commands (parse-input test-input) identity)) ;; => "MCD"
+  (get-top-of-stacks (apply-commands data identity)) ;; => "RNLFDJMCT"
   )
 
