@@ -114,6 +114,20 @@
        (filter #(>= 100000 %))
        (reduce +)))
 
+(defn answer2 [lines]
+  (let [root-with-size
+        (->> (scan-history initial-state lines)
+             :tree (#(get % root))
+             (calc-size root))
+        used (:size root-with-size)
+        max-used (- 70000000 30000000)
+        remove-at-least (- used max-used)]
+    (->> root-with-size
+         (flat-dir root)
+         (map :size)
+         (filter #(<= remove-at-least %))
+         (reduce min))))
+
 (comment
   (def test-data (str/split-lines (slurp (io/resource "day7/test-input.txt"))))
   (scan-history initial-state test-data)
@@ -164,5 +178,8 @@
 
   (def data (str/split-lines (slurp (io/resource "day7/input.txt"))))
   (answer1 data) ;; => 1348005
+
+  (answer2 test-data) ;; => 24933642
+  (answer2 data) ;; => 12785886
   )
 
