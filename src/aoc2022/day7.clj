@@ -6,22 +6,16 @@
 
 (def root "/")
 (def initial-state {:path []
-                    :tree {root {:type :dir
-                                 :children {}}}})
+                    :tree [{:type :dir :name root}]})
 (comment
   {:type :dir
-   :children {"a" {:type :dir
-                   :children {}}
-              "b.txt" {:type :file
-                       :size 12}}})
+   :children [{:type :dir :name "a"}
+              {:type :file :name "b.txt" :size 12}]})
 
 (def command-prefix "$ ")
 
 (defn command? [s]
   (str/starts-with? s command-prefix))
-
-(defn path-to-ks [path]
-  (into [:tree] (interpose :children path)))
 
 (defn cd [state name]
   (update
@@ -35,18 +29,25 @@
 
 (defn parse-content-line [s]
   (let [[type-or-size name] (str/split s #"\s")]
-    [name (if (= "dir" type-or-size)
-            {:type :dir :children {}}
-            {:type :file :size (Integer/parseInt type-or-size)})]))
+    (if (= "dir" type-or-size)
+      {:type :dir :name name}
+      {:type :file :name name
+       :size (Integer/parseInt type-or-size)})))
+
+(defn ls-dirs [path dirs content]
+  (letfn [(ls-dir [dir]
+            (if (= (first path) (:name dir))
+              (if (empty? (rest path))
+                (assoc dir :children content)
+                (update dir :children #(ls-dirs (rest path) % content)))
+              dir))]
+    (if (empty? path) dirs
+        (map ls-dir dirs))))
 
 (defn ls [state content]
-  (update-in
-   state (path-to-ks (:path state))
-   (fn [dir]
-     (assert (= :dir (:type dir))
-             (format "dir: %s, path: %s" dir (path-to-ks (:path state))))
-     (update dir :children
-             #(into % (map parse-content-line content))))))
+  (update state :tree
+          #(ls-dirs (:path state) %
+                    (map parse-content-line content))))
 
 (defn apply-next-command [state lines]
   (assert (seq lines))
@@ -71,45 +72,34 @@
        (drop-while #(seq (:lines %)))
        first :state))
 
-(defn traverse-dir [name dir file-fn dir-fn]
+(defn traverse-dir [dir file-fn dir-fn]
   (->> (:children dir)
-       (map (fn [[name val]]
+       (map (fn [val]
               (match (:type val)
-                     :dir (traverse-dir name val file-fn dir-fn)
-                     :file (file-fn name val))))
-       (dir-fn name dir)))
+                     :dir (traverse-dir val file-fn dir-fn)
+                     :file (file-fn val))))
+       (dir-fn dir)))
 
-(defn calc-size [name dir]
-  (second
-   (traverse-dir
-    name dir
-    (fn [name file] [name file])
-    (fn [name dir acc]
-      [name
-       {:type :dir
-        :size (reduce + (map (comp :size second) acc))
-        :children (->> acc
-                       (filter #(= :dir (:type (second %))))
-                       (into {}))}]))))
-
-(defn flat-dir [name dir]
+(defn calc-size [dir]
   (traverse-dir
-   name dir
-   (fn [name file] (assoc file :name name))
-   (fn [name dir acc]
-     (cons (-> dir (dissoc :children) (assoc :name name))
-           (reduce concat acc)))))
+   dir
+   identity
+   (fn [dir acc]
+     (assoc
+      (if-let [children (seq (filter #(= :dir (:type %)) acc))]
+        (assoc dir :children children)
+        (dissoc dir :children))
+      :size (reduce + (map :size acc))))))
 
-(defn flat-tree [tree]
-  (->> tree
-       (map (fn [[name dir]] (flat-dir name dir)))
-       (reduce concat)))
+(defn flat-dir [dir]
+  (traverse-dir
+   dir identity
+   (fn [dir acc] (cons (dissoc dir :children)
+                       (reduce concat acc)))))
 
 (defn answer1 [lines]
   (->> (scan-history initial-state lines)
-       :tree (#(get % root))
-       (calc-size root)
-       (flat-dir root)
+       :tree first calc-size flat-dir
        (map :size)
        (filter #(>= 100000 %))
        (reduce +)))
@@ -117,14 +107,12 @@
 (defn answer2 [lines]
   (let [root-with-size
         (->> (scan-history initial-state lines)
-             :tree (#(get % root))
-             (calc-size root))
+             :tree first calc-size)
         used (:size root-with-size)
         max-used (- 70000000 30000000)
         remove-at-least (- used max-used)]
     (->> root-with-size
-         (flat-dir root)
-         (map :size)
+         flat-dir (map :size)
          (filter #(<= remove-at-least %))
          (reduce min))))
 
@@ -133,46 +121,46 @@
   (scan-history initial-state test-data)
   ;; => {:path ["/" "d"],
   ;;     :tree
-  ;;     {"/"
-  ;;      {:type :dir,
+  ;;     ({:type :dir,
+  ;;       :name "/",
   ;;       :children
-  ;;       {"a"
-  ;;        {:type :dir,
+  ;;       ({:type :dir,
+  ;;         :name "a",
   ;;         :children
-  ;;         {"e" {:type :dir, :children {"i" {:type :file, :size 584}}},
-  ;;          "f" {:type :file, :size 29116},
-  ;;          "g" {:type :file, :size 2557},
-  ;;          "h.lst" {:type :file, :size 62596}}},
-  ;;        "b.txt" {:type :file, :size 14848514},
-  ;;        "c.dat" {:type :file, :size 8504156},
-  ;;        "d"
+  ;;         ({:type :dir,
+  ;;           :name "e",
+  ;;           :children ({:type :file, :name "i", :size 584})}
+  ;;          {:type :file, :name "f", :size 29116}
+  ;;          {:type :file, :name "g", :size 2557}
+  ;;          {:type :file, :name "h.lst", :size 62596})}
+  ;;        {:type :file, :name "b.txt", :size 14848514}
+  ;;        {:type :file, :name "c.dat", :size 8504156}
   ;;        {:type :dir,
+  ;;         :name "d",
   ;;         :children
-  ;;         {"j" {:type :file, :size 4060174},
-  ;;          "d.log" {:type :file, :size 8033020},
-  ;;          "d.ext" {:type :file, :size 5626152},
-  ;;          "k" {:type :file, :size 7214296}}}}}}}
+  ;;         ({:type :file, :name "j", :size 4060174}
+  ;;          {:type :file, :name "d.log", :size 8033020}
+  ;;          {:type :file, :name "d.ext", :size 5626152}
+  ;;          {:type :file, :name "k", :size 7214296})})})}
 
   (-> (scan-history initial-state test-data)
-      :tree (get root)
-      (#(calc-size root %)))
+      :tree first calc-size)
   ;; => {:type :dir,
-  ;;     :size 48381165,
+  ;;     :name "/",
   ;;     :children
-  ;;     {"a"
-  ;;      {:type :dir,
-  ;;       :size 94853,
-  ;;       :children {"e" {:type :dir, :size 584, :children {}}}},
-  ;;      "d" {:type :dir, :size 24933642, :children {}}}}
+  ;;     ({:type :dir,
+  ;;       :name "a",
+  ;;       :children ({:type :dir, :name "e", :size 584}),
+  ;;       :size 94853}
+  ;;      {:type :dir, :name "d", :size 24933642}),
+  ;;     :size 48381165}
 
   (->> (scan-history initial-state test-data)
-       :tree (#(get % root))
-       (calc-size root)
-       (flat-dir root))
-  ;; => ({:type :dir, :size 48381165, :name "/"}
-  ;;     {:type :dir, :size 94853, :name "a"}
-  ;;     {:type :dir, :size 584, :name "e"}
-  ;;     {:type :dir, :size 24933642, :name "d"})
+       :tree first calc-size flat-dir)
+  ;; => ({:type :dir, :name "/", :size 48381165}
+  ;;     {:type :dir, :name "a", :size 94853}
+  ;;     {:type :dir, :name "e", :size 584}
+  ;;     {:type :dir, :name "d", :size 24933642})
 
   (answer1 test-data) ;; => 95437
 
