@@ -71,28 +71,50 @@
        (drop-while #(seq (:lines %)))
        first :state))
 
-(defn traverse-dir [dir f]
-  (let [named-children
-        (map (fn [[name val]]
-               [name (match (:type val)
-                            :dir (traverse-dir val f)
-                            :file val)])
-             (:children dir))]
-    (f dir named-children)))
+(defn traverse-dir [name dir file-fn dir-fn]
+  (->> (:children dir)
+       (map (fn [[name val]]
+              (match (:type val)
+                     :dir (traverse-dir name val file-fn dir-fn)
+                     :file (file-fn name val))))
+       (dir-fn name dir)))
 
-(defn calc-size [dir]
+(defn calc-size [name dir]
+  (second
+   (traverse-dir
+    name dir
+    (fn [name file] [name file])
+    (fn [name dir acc]
+      [name
+       {:type :dir
+        :size (reduce + (map (comp :size second) acc))
+        :children (->> acc
+                       (filter #(= :dir (:type (second %))))
+                       (into {}))}]))))
+
+(defn flat-dir [name dir]
   (traverse-dir
-   dir
-   (fn [d kv]
-     {:type :dir
-      :size (reduce + (map (comp :size second) kv))
-      :children (->> kv
-                     (filter #(= :dir (:type (second %))))
-                     (into {}))})))
+   name dir
+   (fn [name file] (assoc file :name name))
+   (fn [name dir acc]
+     (cons (-> dir (dissoc :children) (assoc :name name))
+           (reduce concat acc)))))
+
+(defn flat-tree [tree]
+  (->> tree
+       (map (fn [[name dir]] (flat-dir name dir)))
+       (reduce concat)))
+
+(defn answer1 [lines]
+  (->> (scan-history initial-state lines)
+       :tree (#(get % root))
+       (calc-size root)
+       (flat-dir root)
+       (map :size)
+       (filter #(>= 100000 %))
+       (reduce +)))
 
 (comment
-  (map identity {"a" 1 "b" 2}) ;; => (["a" 1] ["b" 2])
-
   (def test-data (str/split-lines (slurp (io/resource "day7/test-input.txt"))))
   (scan-history initial-state test-data)
   ;; => {:path ["/" "d"],
@@ -117,7 +139,9 @@
   ;;          "d.ext" {:type :file, :size 5626152},
   ;;          "k" {:type :file, :size 7214296}}}}}}}
 
-  (calc-size (-> (scan-history initial-state test-data) :tree (get root)))
+  (-> (scan-history initial-state test-data)
+      :tree (get root)
+      (#(calc-size root %)))
   ;; => {:type :dir,
   ;;     :size 48381165,
   ;;     :children
@@ -127,6 +151,18 @@
   ;;       :children {"e" {:type :dir, :size 584, :children {}}}},
   ;;      "d" {:type :dir, :size 24933642, :children {}}}}
 
-  
+  (->> (scan-history initial-state test-data)
+       :tree (#(get % root))
+       (calc-size root)
+       (flat-dir root))
+  ;; => ({:type :dir, :size 48381165, :name "/"}
+  ;;     {:type :dir, :size 94853, :name "a"}
+  ;;     {:type :dir, :size 584, :name "e"}
+  ;;     {:type :dir, :size 24933642, :name "d"})
+
+  (answer1 test-data) ;; => 95437
+
+  (def data (str/split-lines (slurp (io/resource "day7/input.txt"))))
+  (answer1 data) ;; => 1348005
   )
 

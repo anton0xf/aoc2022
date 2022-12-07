@@ -38,12 +38,28 @@
 
 (deftest test-calc-size
   (is (= {:type :dir, :size 584, :children {}}
-         (calc-size {:type :dir,
+         (calc-size root
+                    {:type :dir,
                      :children {"i" {:type :file, :size 584}}})))
   (is (= {:type :dir,
           :size 29700,
           :children {"e" {:type :dir, :size 584, :children {}}}}
-         (calc-size {:type :dir,
+         (calc-size root
+                    {:type :dir,
                      :children
                      {"e" {:type :dir, :children {"i" {:type :file, :size 584}}},
                       "f" {:type :file, :size 29116}}}))))
+
+(deftest test-flat-tree
+  (is (= [{:name "e", :type :dir, :size 584}]
+         (flat-tree {"e" {:type :dir, :size 584, :children {}}})))
+  (is (= [{:name "a" :type :dir :size 29700}
+          {:name "e", :type :dir, :size 584}]
+         (flat-tree {"a" {:type :dir,
+                          :size 29700,
+                          :children {"e" {:type :dir, :size 584, :children {}}}}})))
+  (is (= [{:type :dir, :size 29700, :name "a"}
+          {:type :dir, :size 584, :name "e"}]
+         (flat-tree {"a" {:type :dir,
+                          :size 29700,
+                          :children {"e" {:type :dir, :size 584, :children {}}}}}))))
