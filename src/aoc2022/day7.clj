@@ -71,19 +71,24 @@
        (drop-while #(seq (:lines %)))
        first :state))
 
-
-(defn calc-size [dir]
+(defn traverse-dir [dir f]
   (let [named-children
         (map (fn [[name val]]
                [name (match (:type val)
-                            :dir (calc-size val)
+                            :dir (traverse-dir val f)
                             :file val)])
              (:children dir))]
-    {:type :dir
-     :size (reduce + (map (comp :size second) named-children))
-     :children (->> named-children
-                    (filter #(= :dir (:type (second %))))
-                    (into {}))}))
+    (f dir named-children)))
+
+(defn calc-size [dir]
+  (traverse-dir
+   dir
+   (fn [d kv]
+     {:type :dir
+      :size (reduce + (map (comp :size second) kv))
+      :children (->> kv
+                     (filter #(= :dir (:type (second %))))
+                     (into {}))})))
 
 (comment
   (map identity {"a" 1 "b" 2}) ;; => (["a" 1] ["b" 2])
