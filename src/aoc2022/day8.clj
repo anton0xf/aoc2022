@@ -59,6 +59,38 @@
         invisible (count (get-invisible m))]
     (- total invisible)))
 
+(defn distance-by-direction [m p ps]
+  (let [h (get-in m p)
+        hs (map #(get-in m %) ps)
+        [hsl hsge] (split-with #(> h %) hs)]
+    (+ (count hsl) (if (seq hsge) 1 0))))
+
+(defn split-ps-by [n ps]
+  (let [[left right] (split-at n ps)
+        left (reverse left)
+        right (rest right)]
+    [left right]))
+
+(defn score2-p [m [i j :as p]]
+  (let [dim (get-dimensions m)
+        row (get-row i dim)
+        col (get-col j dim)]
+    (->> (concat (split-ps-by j row)
+                 (split-ps-by i col))
+         (map #(distance-by-direction m p %))
+         (reduce *))))
+
+(defn all-ps [[dim-i dim-j]]
+  (for [i (range dim-i)
+        j (range dim-j)]
+    [i j]))
+
+(defn answer2 [m]
+  (->> (get-dimensions m)
+       all-ps
+       (map #(score2-p m %))
+       (reduce max)))
+
 (comment
   (def test-input
     "30373
@@ -94,6 +126,10 @@
 
   (def data (parse-input (slurp (io/resource "day8/input.txt"))))
   (answer1 data) ;; => 1812
+
+  (score2-p test-data [1 2]) ;; => 4
+  (answer2 test-data) ;; => 8
+  (answer2 data) ;; => 315495
   )
 
 
