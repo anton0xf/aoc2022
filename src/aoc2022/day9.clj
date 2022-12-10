@@ -94,6 +94,8 @@
        (map parse-command)))
 
 (def initial-short-state {\H [0 0] \T [0 0]})
+(def initial-long-state
+  (->> long-rope (map #(vector % p-zero)) (into {})))
 
 (defn state-to-lps [state]
   (map (fn [[k v]] (apply lp k v)) state))
