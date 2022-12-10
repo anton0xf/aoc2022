@@ -109,23 +109,24 @@
            \T (if (touching? new-hp tp) tp
                   (p-plus tp (direction-to tp new-hp)))})))
 
-(defn apply-command [state [direction count]]
-  (->> (iterate #(move \H \T % direction) state)
-       rest (take count)))
+(defn apply-command [state rope [direction count]]
+  (let [step-fn #(move \H \T % direction)]
+    (->> (iterate step-fn state)
+         rest (take count))))
 
-(defn apply-commands [state commands]
+(defn apply-commands [state rope commands]
   (loop [state state
          commands commands
          states [state]]
     (if (empty? commands) states
-        (let [next-states (apply-command state (first commands))]
+        (let [next-states (apply-command state rope (first commands))]
           (recur (last next-states)
                  (rest commands)
                  (into states next-states))))))
 
 (defn answer1 [commands]
   (->> commands
-       (apply-commands initial-short-state)
+       (apply-commands initial-short-state short-rope)
        (map #(get % \T))
        set count))
 
@@ -139,12 +140,13 @@
 
   
   (->> (map parse-command ["R 4" "U 4"])
-       (apply-commands (assoc initial-short-state \s p-zero))
+       (apply-commands (assoc initial-short-state \s p-zero)
+                       short-rope)
        (map state-to-lps)
-       (map print-lps))
+       (run! print-lps))
 
   (->> (map parse-command ["R 4" "U 4"])
-       (apply-commands initial-short-state)
+       (apply-commands initial-short-state short-rope)
        (map #(get % \T))
        (map #(apply lp \# %))
        print-lps)
