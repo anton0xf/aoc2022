@@ -49,7 +49,14 @@
   (is (= [-1 -1] (direction-to [0 0] [-5 -1])))
   (is (= [-1 -1] (direction-to [0 0] [-1 -5]))))
 
-(def test-commands "R 4
+(deftest test-parse-command
+  (is (= [[0 1] 4] (parse-command "R 4"))))
+
+(deftest test-state-to-lps
+  (is (= [(lp \H 0 0) (lp \T 0 0)]
+         (state-to-lps initial-state))))
+
+(def test-input "R 4
 U 4
 L 3
 D 1
@@ -58,9 +65,5 @@ D 1
 L 5
 R 2")
 
-(deftest test-parse-command
-  (is (= [[0 1] 4] (parse-command "R 4"))))
-
-(deftest test-state-to-lps
-  (is (= [(lp \H 0 0) (lp \T 0 0)]
-         (state-to-lps initial-state))))
+(deftest test-answer1
+  (is (= 13 (answer1 (parse-input test-input)))))

@@ -84,13 +84,42 @@
     [(directions command)
      (Integer/parseInt count-str)]))
 
+(defn parse-input [s]
+  (->> (str/split-lines s)
+       (map parse-command)))
+
 (def initial-state {\H [0 0] \T [0 0]})
 
 (defn state-to-lps [state]
   (map (fn [[k v]] (apply lp k v)) state))
 
+(defn move [{hp \H tp \T :as state} direction]
+  (let [new-hp (p-plus hp direction)]
+    (into state
+          {\H new-hp
+           \T (if (touching? new-hp tp) tp
+                  (p-plus tp (direction-to tp new-hp)))})))
+
 (defn apply-command [state [direction count]]
-  (let [new-h (-> (get state \H) (p-plus (p-mult )) )]))
+  (->> (iterate #(move % direction) state)
+       rest (take count)))
+
+(defn apply-commands [state commands]
+  (loop [state state
+         commands commands
+         states [state]]
+    (if (empty? commands) states
+        (let [next-states (apply-command state (first commands))]
+          (recur (last next-states)
+                 (rest commands)
+                 (into states next-states))))))
+
+(defn answer1 [commands]
+  (->> commands
+       (apply-commands initial-state)
+       (map #(get % \T))
+       set count))
+
 (comment
   (->> [(lp \H 1 0) (lp \T 0 1)]
        (map (fn [{c :d9/char p :d9/point}] [p c]))
@@ -100,7 +129,26 @@
   (print-lps [(lp \H 1 0) (lp \T 0 1)])
 
   
-  (apply-command initial-state [[0 1] 4])
+  (->> (map parse-command ["R 4" "U 4"])
+       (apply-commands (assoc initial-state \s p-zero))
+       (map state-to-lps)
+       (map print-lps))
 
+  (->> (map parse-command ["R 4" "U 4"])
+       (apply-commands initial-state)
+       (map #(get % \T))
+       (map #(apply lp \# %))
+       print-lps)
+  ;; .......
+  ;; .....#.
+  ;; .....#.
+  ;; .....#.
+  ;; .####..
+  ;; .......
+
+  (answer1 (parse-input "R 4\nU 4")) ;; => 7
+
+  (def data (parse-input (slurp (io/resource "day9/input.txt"))))
+  (answer1 data) ;; => 5930
   )
 
