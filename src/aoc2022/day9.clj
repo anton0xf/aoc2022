@@ -58,6 +58,11 @@
    :post [(s/valid? :d9/point %)]}
   (map - p1 p2))
 
+(def short-rope '(\H \T))
+(def long-rope (->> (range 10)
+                    (map #(char (+ (int \0) %)))
+                    (cons \H)))
+
 (defn touching? [hp tp]
   (->> (p-minus hp tp)
        (map abs)
