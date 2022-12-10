@@ -34,6 +34,7 @@
   (let [[[i-min j-min] [i-max j-max]] (get-bounds lps 1)
         ps-map (->> lps
                     (map (fn [{c :d9/char p :d9/point}] [p c]))
+                    (sort-by second) reverse
                     (into {}))]
     (str/join
      "\n" (for [i (range i-min (inc i-max))]
@@ -59,8 +60,8 @@
   (map - p1 p2))
 
 (def short-rope '(\H \T))
-(def long-rope (->> (range 10)
-                    (map #(char (+ (int \0) %)))
+(def long-rope (->> (range 9)
+                    (map #(char (+ (int \1) %)))
                     (cons \H)))
 
 (defn touching? [hp tp]
@@ -100,6 +101,17 @@
 (defn state-to-lps [state]
   (map (fn [[k v]] (apply lp k v)) state))
 
+(defn move1 [pc state direction]
+  (assoc state pc
+         (p-plus (get state pc) direction)))
+
+(defn move-to [tc hc state]
+  (let [tp (get state tc)
+        hp (get state hc)]
+    (if (touching? hp tp) state
+        (assoc state tc
+               (p-plus tp (direction-to tp hp))))))
+
 (defn move [hc tc state direction]
   (let [hp (get state hc)
         tp (get state tc)
@@ -110,7 +122,14 @@
                   (p-plus tp (direction-to tp new-hp)))})))
 
 (defn apply-command [state rope [direction count]]
-  (let [step-fn #(move \H \T % direction)]
+  (let [step-fn (fn [state]
+                  (loop [hc (first rope)
+                         st (move1 (first rope) state direction)
+                         cs (rest rope)]
+                    (if (empty? cs) st
+                        (recur (first cs)
+                               (move-to (first cs) hc st)
+                               (rest cs)))))]
     (->> (iterate step-fn state)
          rest (take count))))
 
@@ -129,6 +148,20 @@
        (apply-commands initial-short-state short-rope)
        (map #(get % \T))
        set count))
+
+(defn answer2 [commands]
+  (->> commands
+       (apply-commands initial-long-state long-rope)
+       (map #(get % \9)) set count))
+
+(def test-input2 "R 5
+U 8
+L 8
+D 3
+R 17
+D 10
+L 25
+U 20")
 
 (comment
   (->> [(lp \H 1 0) (lp \T 0 1)]
@@ -162,5 +195,35 @@
   (def data (parse-input (slurp (io/resource "day9/input.txt"))))
   (answer1 data) ;; => 5930
 
+  (->> (map parse-command ["R 4" "U 4"])
+       (apply-commands initial-long-state long-rope)
+       (map state-to-lps)
+       (run! print-lps))
+
+  (->> (parse-input test-input2)
+       (apply-commands initial-long-state long-rope)
+       (map #(get % \9)) set
+       (map #(apply lp \# %)) print-lps)
+  ;; ........................
+  ;; .#......................
+  ;; .#.............###......
+  ;; .#............#...#.....
+  ;; ..#..........#.....#....
+  ;; ...#..........#.....#...
+  ;; ....#........#.......#..
+  ;; .....#......#.........#.
+  ;; ......#..............#..
+  ;; .......#............#...
+  ;; ........#..........#....
+  ;; .........#........#.....
+  ;; ..........########......
+  ;; ........................
+
+  (->> (parse-input test-input2)
+       (apply-commands initial-long-state long-rope)
+       (map #(get % \9)) set count)
+  (answer2 (parse-input test-input2)) ;; => 36
+
+  (answer2 data) ;; => 2443
   )
 

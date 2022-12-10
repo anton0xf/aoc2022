@@ -65,5 +65,35 @@ D 1
 L 5
 R 2")
 
+(defn apply-input [input state rope]
+  (->> (parse-input input)
+       (apply-commands state rope)
+       last state-to-lps format-lps))
+
+(deftest test-apply-command
+  (is (= "...
+.H.
+.T.
+..."
+         (apply-input "R 4\nU 4" initial-short-state short-rope)))
+  (is (= ".......
+.....H.
+.....1.
+...432.
+..5....
+.6.....
+......."
+         (apply-input "R 4\nU 4" initial-long-state long-rope)))
+  (is (= "......
+..123.
+..5...
+.6....
+......"
+         (apply-input test-input initial-long-state long-rope))))
+
+
 (deftest test-answer1
   (is (= 13 (answer1 (parse-input test-input)))))
+
+(deftest test-answer2
+  (is (= 36 (answer2 (parse-input test-input2)))))
