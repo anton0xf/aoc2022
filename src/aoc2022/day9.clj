@@ -93,15 +93,17 @@
 (defn state-to-lps [state]
   (map (fn [[k v]] (apply lp k v)) state))
 
-(defn move [{hp \H tp \T :as state} direction]
-  (let [new-hp (p-plus hp direction)]
+(defn move [hc tc state direction]
+  (let [hp (get state hc)
+        tp (get state tc)
+        new-hp (p-plus hp direction)]
     (into state
           {\H new-hp
            \T (if (touching? new-hp tp) tp
                   (p-plus tp (direction-to tp new-hp)))})))
 
 (defn apply-command [state [direction count]]
-  (->> (iterate #(move % direction) state)
+  (->> (iterate #(move \H \T % direction) state)
        rest (take count)))
 
 (defn apply-commands [state commands]
