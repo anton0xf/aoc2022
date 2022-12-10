@@ -93,7 +93,7 @@
   (->> (str/split-lines s)
        (map parse-command)))
 
-(def initial-state {\H [0 0] \T [0 0]})
+(def initial-short-state {\H [0 0] \T [0 0]})
 
 (defn state-to-lps [state]
   (map (fn [[k v]] (apply lp k v)) state))
@@ -123,7 +123,7 @@
 
 (defn answer1 [commands]
   (->> commands
-       (apply-commands initial-state)
+       (apply-commands initial-short-state)
        (map #(get % \T))
        set count))
 
@@ -137,12 +137,12 @@
 
   
   (->> (map parse-command ["R 4" "U 4"])
-       (apply-commands (assoc initial-state \s p-zero))
+       (apply-commands (assoc initial-short-state \s p-zero))
        (map state-to-lps)
        (map print-lps))
 
   (->> (map parse-command ["R 4" "U 4"])
-       (apply-commands initial-state)
+       (apply-commands initial-short-state)
        (map #(get % \T))
        (map #(apply lp \# %))
        print-lps)
@@ -157,5 +157,6 @@
 
   (def data (parse-input (slurp (io/resource "day9/input.txt"))))
   (answer1 data) ;; => 5930
+
   )
 

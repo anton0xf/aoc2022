@@ -54,7 +54,7 @@
 
 (deftest test-state-to-lps
   (is (= [(lp \H 0 0) (lp \T 0 0)]
-         (state-to-lps initial-state))))
+         (state-to-lps initial-short-state))))
 
 (def test-input "R 4
 U 4
