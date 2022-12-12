@@ -38,7 +38,6 @@
       slurp parse-input))
 
 (defn inspect-item [item monkey]
-  (println "inspect-item" [item monkey])
   (match (:operation monkey)
          ["+" n] (+ item n)
          ["*" :old] (* item item)
@@ -55,11 +54,6 @@
         new-level (quot inspected-level 3)
         test-res (test-item new-level monkey)
         new-id (get monkey [:if test-res])]
-    (println "monkey-turn"
-             "inspected-level" inspected-level
-             "new-level" new-level
-             "test-res" test-res
-             "new-id" new-id)
     (update-in state [new-id :items]
                (fn [items] (concat items [new-level])))))
 
