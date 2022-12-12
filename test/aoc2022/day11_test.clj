@@ -3,7 +3,7 @@
             [clojure.test :refer :all]))
 
 (deftest test-parse-monkey
-  (is (= {:num 7,
+  (is (= {:id 7,
           :items [79 98],
           :operation ["*" 19],
           :test [:divisible-by 23],
@@ -15,3 +15,11 @@
                         "  Test: divisible by 23"
                         "    If true: throw to monkey 2"
                         "    If false: throw to monkey 3"]))))
+
+(deftest test-inspect-item
+  (is (= 5 (inspect-item 2 {:operation ["+" 3]})))
+  (is (= 6 (inspect-item 2 {:operation ["*" 3]})))
+  (is (= 4 (inspect-item 2 {:operation ["*" :old]}))))
+
+(deftest test-test-intem
+  (is (test-item 2080 {:test [:divisible-by 13]})))
