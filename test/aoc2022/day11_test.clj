@@ -26,7 +26,7 @@
 
 (deftest test-count-inspected
   (is (= [[0 101] [1 95] [2 7] [3 105]]
-         (count-inspected (first test-data) (second test-data) 20))))
+         (count-inspected (first test-data) (second test-data) 20 3))))
 
 (deftest test-answer1
   (is (= 10605 (answer1 test-data))))

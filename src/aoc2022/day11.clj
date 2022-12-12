@@ -50,10 +50,10 @@
 
 (defn monkey-turn
   "process one monkey's item"
-  [item monkey m state]
+  [item monkey m p state]
   (let [inspected-level (-> (inspect-item item monkey)
                             (rem m))
-        new-level (quot inspected-level 3)
+        new-level (quot inspected-level p)
         test-res (test-item new-level monkey)
         new-id (get monkey [:if test-res])]
     (update-in state [new-id :items]
@@ -61,7 +61,7 @@
 
 (defn monkey-round
   "process all monkey's items"
-  [id m state] ;; -> state
+  [id m p state] ;; -> state
   (let [monkey (get state id)]
     (loop [monkey monkey
            state state]
@@ -71,26 +71,26 @@
           (recur (-> monkey
                      (assoc :items (rest items))
                      (update :inspected #(inc (or % 0))))
-                 (monkey-turn (first items) monkey m state)))))))
+                 (monkey-turn (first items) monkey m p state)))))))
 
-(defn full-round [ids m state]
+(defn full-round [ids m p state]
   (if (empty? ids) state
-      (recur (rest ids) m
-             (monkey-round (first ids) m state))))
+      (recur (rest ids) m p
+             (monkey-round (first ids) m p state))))
 
-(defn rounds [ids state]
+(defn rounds [ids p state]
   (let [m (->> (vals state)
                (map (comp second :test))
-               (cons 3)
+               (cons p)
                (reduce math/lcm))]
-    (iterate #(full-round ids m %) state)))
+    (iterate #(full-round ids m p %) state)))
 
-(defn count-inspected [ids state n]
-  (->> (nth (rounds ids state) n)
+(defn count-inspected [ids state n p]
+  (->> (nth (rounds ids p state) n)
        (map (fn [[k v]] [k (:inspected v)]))))
 
 (defn answer1 [[ids state]]
-  (->> (count-inspected ids state 20)
+  (->> (count-inspected ids state 20 3)
        (map second) (sort >) (take 2) (reduce *)))
 
 (comment
