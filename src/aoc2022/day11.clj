@@ -2,7 +2,8 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.set :as sets]
-            [clojure.core.match :refer [match]]))
+            [clojure.core.match :refer [match]]
+            [clojure.math.numeric-tower :as math]))
 
 (defn split-to-monkeys [s]
   (->> (str/split-lines s)
@@ -49,8 +50,9 @@
 
 (defn monkey-turn
   "process one monkey's item"
-  [item monkey state]
-  (let [inspected-level (inspect-item item monkey)
+  [item monkey m state]
+  (let [inspected-level (-> (inspect-item item monkey)
+                            (rem m))
         new-level (quot inspected-level 3)
         test-res (test-item new-level monkey)
         new-id (get monkey [:if test-res])]
@@ -59,7 +61,7 @@
 
 (defn monkey-round
   "process all monkey's items"
-  [id state] ;; -> state
+  [id m state] ;; -> state
   (let [monkey (get state id)]
     (loop [monkey monkey
            state state]
@@ -69,19 +71,27 @@
           (recur (-> monkey
                      (assoc :items (rest items))
                      (update :inspected #(inc (or % 0))))
-                 (monkey-turn (first items) monkey state)))))))
+                 (monkey-turn (first items) monkey m state)))))))
 
-(defn full-round [ids state]
+(defn full-round [ids m state]
   (if (empty? ids) state
-      (recur (rest ids)
-             (monkey-round (first ids) state))))
+      (recur (rest ids) m
+             (monkey-round (first ids) m state))))
 
 (defn rounds [ids state]
-  (iterate #(full-round ids %) state))
+  (let [m (->> (vals state)
+               (map (comp second :test))
+               (cons 3)
+               (reduce math/lcm))]
+    (iterate #(full-round ids m %) state)))
 
 (defn count-inspected [ids state n]
   (->> (nth (rounds ids state) n)
        (map (fn [[k v]] [k (:inspected v)]))))
+
+(defn answer1 [[ids state]]
+  (->> (count-inspected ids state 20)
+       (map second) (sort >) (take 2) (reduce *)))
 
 (comment
   (-> test-data second (get 0))
@@ -101,4 +111,15 @@
 
   (count-inspected (first test-data) (second test-data) 20)
   ;; => ([0 101] [1 95] [2 7] [3 105])
+
+  (answer1 test-data) ;; => 10605
+
+  (->> (vals (second test-data))
+       (map (comp second :test))
+       (cons 3)
+       (reduce math/lcm))
+  ;; => 289731
+
+  (def data (-> (io/resource "day11/input.txt") slurp parse-input))
+  (answer1 data) ;; => 118674
   )
