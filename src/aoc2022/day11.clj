@@ -66,7 +66,9 @@
       (let [items (:items monkey)]
         (if (empty? items)
           (assoc state id monkey)
-          (recur (assoc monkey :items (rest items))
+          (recur (-> monkey
+                     (assoc :items (rest items))
+                     (update :inspected #(inc (or % 0))))
                  (monkey-turn (first items) monkey state)))))))
 
 (defn full-round [ids state]
@@ -76,6 +78,10 @@
 
 (defn rounds [ids state]
   (iterate #(full-round ids %) state))
+
+(defn count-inspected [ids state n]
+  (->> (nth (rounds ids state) n)
+       (map (fn [[k v]] [k (:inspected v)]))))
 
 (comment
   (-> test-data second (get 0))
@@ -89,33 +95,10 @@
   (->> test-data second
        (monkey-round 0))
 
-  (apply full-round test-data)
-  ;; => {0
-  ;;     {:id 0,
-  ;;      :items (20 23 27 26),
-  ;;      :operation ["*" 19],
-  ;;      :test [:divisible-by 23],
-  ;;      [:if true] 2,
-  ;;      [:if false] 3},
-  ;;     1
-  ;;     {:id 1,
-  ;;      :items (2080 25 167 207 401 1046),
-  ;;      :operation ["+" 6],
-  ;;      :test [:divisible-by 19],
-  ;;      [:if true] 2,
-  ;;      [:if false] 0},
-  ;;     2
-  ;;     {:id 2,
-  ;;      :items (),
-  ;;      :operation ["*" :old],
-  ;;      :test [:divisible-by 13],
-  ;;      [:if true] 1,
-  ;;      [:if false] 3},
-  ;;     3
-  ;;     {:id 3,
-  ;;      :items (),
-  ;;      :operation ["+" 3],
-  ;;      :test [:divisible-by 17],
-  ;;      [:if true] 0,
-  ;;      [:if false] 1}}
+  (->> (apply full-round test-data)
+       (map (fn [[k v]] [k (:items v)])))
+  ;; => ([0 (20 23 27 26)] [1 (2080 25 167 207 401 1046)] [2 ()] [3 ()])
+
+  (count-inspected (first test-data) (second test-data) 20)
+  ;; => ([0 101] [1 95] [2 7] [3 105])
   )

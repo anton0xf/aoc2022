@@ -23,3 +23,7 @@
 
 (deftest test-test-intem
   (is (test-item 2080 {:test [:divisible-by 13]})))
+
+(deftest test-count-inspected
+  (is (= [[0 101] [1 95] [2 7] [3 105]]
+         (count-inspected (first test-data) (second test-data) 20))))
