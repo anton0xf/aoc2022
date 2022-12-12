@@ -78,11 +78,14 @@
       (recur (rest ids) m p
              (monkey-round (first ids) m p state))))
 
+(defn state-lcm [p state]
+  (->> (vals state)
+       (map (comp second :test))
+       (cons p)
+       (reduce math/lcm)))
+
 (defn rounds [ids p state]
-  (let [m (->> (vals state)
-               (map (comp second :test))
-               (cons p)
-               (reduce math/lcm))]
+  (let [m (state-lcm p state)]
     (iterate #(full-round ids m p %) state)))
 
 (defn count-inspected [ids state n p]
@@ -91,6 +94,10 @@
 
 (defn answer1 [[ids state]]
   (->> (count-inspected ids state 20 3)
+       (map second) (sort >) (take 2) (reduce *)))
+
+(defn answer2 [[ids state]]
+  (->> (count-inspected ids state 10000 1)
        (map second) (sort >) (take 2) (reduce *)))
 
 (comment
@@ -114,12 +121,12 @@
 
   (answer1 test-data) ;; => 10605
 
-  (->> (vals (second test-data))
-       (map (comp second :test))
-       (cons 3)
-       (reduce math/lcm))
-  ;; => 289731
+  (state-lcm 3 (second test-data)) ;; => 289731
 
   (def data (-> (io/resource "day11/input.txt") slurp parse-input))
   (answer1 data) ;; => 118674
+
+  (state-lcm 1 (second data)) ;; => 9699690
+  (answer2 test-data) ;; => 2713310158
+  (answer2 data) ;; => 32333418600
   )
