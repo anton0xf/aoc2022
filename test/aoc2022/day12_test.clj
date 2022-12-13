@@ -30,10 +30,13 @@
 
 (deftest test-bfs-on-map
   (is (= (str/trim "
-v..v<<<<
->v.vv<<^
-.v.v>E^^
-.>v>>>^^
+>>vv<<<<
+..vvv<<^
+..vv>E^^
+..v>>>^^
 ..>>>>>^")
          (->> (bfs-on-map test-data)
               (format-path (map-size (:map test-data)))))))
+
+(deftest test-answer1
+  (is (= 31 (answer1 test-data))))

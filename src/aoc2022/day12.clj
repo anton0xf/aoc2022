@@ -76,16 +76,18 @@ abdefghi")
 
 (defn bfs [q neighbours-f done-p]
   (loop [q (into clojure.lang.PersistentQueue/EMPTY q)
+         enqueued (into #{} q)
          visited #{}
          prevs {}]
     ;; (println "bfs step" "q" (seq q) "visited" visited "prevs" prevs)
     (if (seq q)
       (let [p (peek q)]
         (cond (done-p p) (get-path p prevs)
-              (visited p) (recur (pop q) visited prevs)
+              (visited p) (recur (pop q) enqueued visited prevs)
               :else
-              (let [ns (->> (neighbours-f p) (filter #(not (visited %))))]
+              (let [ns (->> (neighbours-f p) (filter #(not (enqueued %))))]
                 (recur (into (pop q) ns)
+                       (into enqueued ns)
                        (conj visited p)
                        (into prevs (map (fn [np] [np p]) ns)))))))))
 
@@ -103,6 +105,24 @@ abdefghi")
 
 (defn answer1 [data]
   (->> (bfs-on-map data) count dec))
+
+(defn select-points [m pred]
+  (let [size (map-size m)]
+    (for [i (range (first size))
+          j (range (second size))
+          :when (pred (get-in m [i j]))]
+      [i j])))
+
+(defn answer2 [{start :start end :end m :map}]
+  (let [size (map-size m)
+        start-ps (into #{} (select-points m #(= % 0)))
+        path (bfs start-ps
+                  #(available-neigbours % m size)
+                  #(= % end))]
+    (println (format-path size path))
+    (->> (map first path)
+         (filter #(not (start-ps %)))
+         count)))
 
 (comment
   (->> test-input parse-input (search-on-map \E)) ;; => [2 5]
@@ -123,6 +143,12 @@ abdefghi")
   (->> (bfs-on-map test-data)
        (format-path (map-size (:map test-data)))
        println)
+  ;; >>vv<<<<
+  ;; ..vvv<<^
+  ;; ..vv>E^^
+  ;; ..v>>>^^
+  ;; ..>>>>>^
+  
   (answer1 test-data) ;; => 31
 
   (def data (input-to-map (slurp (io/resource "day12/input.txt"))))
@@ -130,4 +156,11 @@ abdefghi")
        (format-path (map-size (:map data)))
        println)
   (answer1 data) ;; => 350
+
+  (select-points (:map test-data) #(= % 0))
+  ;; => ([0 0] [0 1] [1 0] [2 0] [3 0] [4 0])
+
+  (answer2 test-data) ;; => 29
+  (select-points (:map data) #(= % 0))
+  (answer2 data) ;; => 349
   )
