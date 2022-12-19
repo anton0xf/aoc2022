@@ -18,7 +18,7 @@
   (is (= {:bounds [[-1 -1] [3 3]]
           :source [1 2]
           :sand 0
-          :ps {[1 2] \+, [0 0] \#, [1 0] \#, [2 0] \#}}
+          :ps {[0 0] \#, [1 0] \#, [2 0] \#}}
          (paths-to-map [1 2] [[[0 0] [2 0]]])))
   (is (= "sand: 0
 .....
@@ -46,3 +46,7 @@
 ~###.
 ~...."
          (->> simple-map sand-fall sand-fall map-to-str))))
+
+(deftest test-floor-of-paths
+  (is (= [[487 11] [513 11]]
+         (floor-of-paths sand-source test-paths))))

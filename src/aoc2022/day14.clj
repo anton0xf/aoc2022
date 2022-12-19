@@ -40,16 +40,17 @@
      :ps (->> paths 
               (map trace-path) (reduce concat)
               (map #(vector % \#))
-              (into {sand-source \+}))}))
+              (into {}))}))
 
-(defn map-to-str [{ps :ps sand :sand
+(defn map-to-str [{ps :ps sand :sand source :source
                    [[x-min y-min] [x-max y-max]] :bounds}]
-  (str/join
-   "\n"
-   (cons (format "sand: %d" sand)
-         (for [y (range y-min (inc y-max))]
-           (str/join (for [x (range x-min (inc x-max))]
-                       (str (get ps [x y] \.))))))))
+  (let [ps (assoc ps source \+)]
+    (str/join
+     "\n"
+     (cons (format "sand: %d" sand)
+           (for [y (range y-min (inc y-max))]
+             (str/join (for [x (range x-min (inc x-max))]
+                         (str (get ps [x y] \.)))))))))
 
 (defn print-map [m]
   (println (map-to-str m))
@@ -66,7 +67,7 @@
 (defn sand-fall [m] ; -> m
   (let [bs (:bounds m), bs1 (bounds 1 bs)
         trace (->> (:source m)
-                   (iterate #(sand-step % m)) rest
+                   (iterate #(sand-step % m))
                    (take-while (fn [p] (and p (in-bounds? p bs1)))))
         end-p (last trace)]
     (if (in-bounds? end-p bs)
@@ -81,6 +82,27 @@
   (->> (iterate sand-fall m)
        (drop-while #(not (:overflow %)))
        first))
+
+;; part 2
+(defn floor-of-paths [source paths]
+  (let [[sx sy] source
+        floor-y (->> paths (reduce concat) (map second) (reduce max) (+ 2))
+        d (- floor-y sy)
+        d2 (+ 2 d)]
+    [[(- sx d2) floor-y] [(+ sx d2) floor-y]]))
+
+(defn sand-overflow2 [m] ; -> m
+  (let [source (:source m)]
+    (->> (iterate sand-fall m)
+         (drop-while (fn [m] (and (not (:overflow m))
+                                  (not (get-in m [:ps source])))))
+         first)))
+
+(defn answer2 [source paths]
+  (->> (cons (floor-of-paths source paths)
+             paths)
+       (paths-to-map source)
+       sand-overflow2))
 
 (comment
   test-paths
@@ -107,10 +129,36 @@
        parse-input
        (paths-to-map sand-source)
        print-map)
+
+  (def input-paths
+    (->> (io/resource "day14/input.txt") slurp
+         parse-input))
   
-  (->> (io/resource "day14/input.txt") slurp
-       parse-input
+  (->> input-paths
        (paths-to-map sand-source)
        sand-overflow print-map)
   ;; sand: 1078
+
+  ;; part 2
+
+  (let [source sand-source
+        paths test-paths
+        m (answer2 source paths)]
+    (print-map m)
+    (:sand m))
+  ;; => 93
+
+  (let [source [1 -3]
+        paths [[[0 0] [2 0]]]
+        m (answer2 source paths)]
+    (print-map m)
+    (:sand m))
+  ;; => 21
+
+  (let [source sand-source
+        paths input-paths
+        m (answer2 source paths)]
+    (:sand m))
+  ;; => 30157
+
   )
