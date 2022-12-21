@@ -69,7 +69,7 @@
 
 (defn is-ls [is] (->> is (map first) frequencies))
 (defn is-rs [is] (->> is (map second) frequencies))
-(defn is-xs [ls rs] (into (sorted-set) (concat (keys ls) (keys rs))))
+(defn is-xs [ls rs] (->> (concat (keys ls) (keys rs)) sort dedupe))
 
 (defn merge-intervals [is]
   (let [ls (is-ls is)
