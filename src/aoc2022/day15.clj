@@ -54,22 +54,28 @@
          (filter (fn [x] (some #(in-interval? x %) intervals)))
          count)))
 
+(defn merge-intervals-iter [xs oc l res [ls rs]]
+  (if (empty? xs) res
+      (let [x (first xs), xs (rest xs)
+            l? (pos? (get ls x 0))
+            r? (pos? (get rs x 0))
+            oc (-> oc
+                   (+ (get ls x 0))
+                   (- (get rs x 0)))
+            l (if l? (or l x) l)]
+        (cond (and r? (zero? oc)) (recur xs oc nil (conj res [l x]) [ls rs])
+              r? (recur xs oc l res [ls rs])
+              :else (recur xs oc l res [ls rs])))))
+
+(defn is-ls [is] (->> is (map first) frequencies))
+(defn is-rs [is] (->> is (map second) frequencies))
+(defn is-xs [ls rs] (->> (concat (keys ls) (keys rs)) sort dedupe))
+
 (defn merge-intervals [is]
-  (let [ls (group-by first is)
-        rs (group-by second is)
-        xs (into (sorted-set) (concat (keys ls) (keys rs)))]
-    (loop [xs xs, oc 0, l nil, res []]
-      (if (empty? xs) res
-          (let [x (first xs), xs (rest xs)
-                l? (seq (get ls x))
-                r? (seq (get rs x))
-                oc (-> oc
-                       (+ (count (get ls x [])))
-                       (- (count (get rs x []))))
-                l (if l? (or l x) l)]
-            (cond (and r? (zero? oc)) (recur xs oc nil (conj res [l x]))
-                  r? (recur xs oc l res)
-                  :else (recur xs oc l res)))))))
+  (let [ls (is-ls is)
+        rs (is-rs is)
+        xs (is-xs ls rs)]
+    (merge-intervals-iter xs 0 nil [] [ls rs])))
 
 (defn merge-intervals-count [is]
   (->> (merge-intervals is)
@@ -103,7 +109,7 @@
 
 (defn search-possible-locations [[[x-min y-min] [x-max y-max]] data]
   (for [y (range y-min (inc y-max))
-        :let [cis (->> (intervals-at-y y data)
+        :let [cis (->> (intervals-at-y y data) doall
                        (is-complement [x-min x-max]))]
         :when (seq cis)]
     [y cis]))
@@ -145,6 +151,46 @@
   ;; => ()
   ;; "Elapsed time: 2208.33445 msecs"
 
+  ;; "Elapsed time: 3068.779917 msecs"
+  ;; |                                     :name |     :n |  :sum |   :q1 |  :med |   :q3 |  :sd | :mad |
+  ;; |-------------------------------------------+--------+-------+-------+-------+-------+------+------|
+  ;; | #'aoc2022.day15/search-possible-locations |      1 | 209µs | 209µs | 209µs | 209µs |  0µs |  0µs |
+  ;; |            #'aoc2022.day15/intervals-at-y | 40 001 |  11ms |   0µs |   0µs |   0µs |  0µs |  0µs |
+  ;; |             #'aoc2022.day15/is-complement | 40 001 |  1,5s |  31µs |  37µs |  38µs | 86µs |  2µs |
+  ;; |           #'aoc2022.day15/merge-intervals | 40 001 |  1,4s |  29µs |  35µs |  36µs | 86µs |  2µs |
+  ;; |                     #'aoc2022.day15/is-ls | 40 001 | 218ms |   4µs |   5µs |   5µs | 35µs |  0µs |
+  ;; |                     #'aoc2022.day15/is-rs | 40 001 | 167ms |   4µs |   4µs |   4µs |  9µs |  0µs |
+  ;; |                     #'aoc2022.day15/is-xs | 40 001 | 346ms |   7µs |   8µs |   9µs | 50µs |  1µs |
+  ;; |                       #'clojure.core/into | 40 066 | 316ms |   5µs |   6µs |   6µs | 73µs |  0µs |
+  ;; |                   #'clojure.core/group-by | 80 002 | 241ms |   3µs |   3µs |   3µs |  3µs |  0µs |
+  ;; |      #'aoc2022.day15/merge-intervals-iter | 40 001 | 439ms |   9µs |  11µs |  12µs |  7µs |  1µs |
+
+  (let [[[x-min y-min] [x-max y-max]] [[0 0] [4000000 4000000]]]
+    (->> (for [y (range x-min (inc y-max))]
+           (->> (intervals-at-y y data) count))
+         (group-by identity)
+         (map (fn [[k vs]] [k (count vs)]))
+         (sort-by first)))
+  ;; => ([ 4   38892]
+  ;;     [ 5 1311055]
+  ;;     [ 6  538955]
+  ;;     [ 7  879508]
+  ;;     [ 8  341367]
+  ;;     [ 9  135677]
+  ;;     [10  106349]
+  ;;     [11  152943]
+  ;;     [12   61932]
+  ;;     [13  314848]
+  ;;     [14   66511]
+  ;;     [15   51964])
+
+  (let [[[x-min y-min] [x-max y-max]] [[0 0] [4000000 40000]]]
+    (->> (for [y (range x-min (inc y-max))]
+           (->> (intervals-at-y y data) count))
+         (group-by identity)
+         (map (fn [[k vs]] [k (count vs)]))
+         (sort-by first)))
+  ;; => ([4 38892] [5 1109])
 
   )
 
