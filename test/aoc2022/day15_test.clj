@@ -39,7 +39,7 @@
   (is (every? #(= 7 %)
               (for [l (range 0 7), r (range l 7)]
                 (merge-intervals-count0 (list [0 4] [2 6] [l r])))))
-  (is (= 27 (->> test-data (keep #(apply interval-at-y 10 %)) merge-intervals-count0))))
+  (is (= 27 (->> test-data (intervals-at-y 10) merge-intervals-count0))))
 
 (deftest test-merge-intervals
   (is (= '([0 1]) (merge-intervals '([0 1]))))
@@ -57,7 +57,7 @@
   (is (every? #(= '([0 6]) %)
               (for [l (range 0 7), r (range l 7)]
                 (merge-intervals (list [0 4] [2 6] [l r])))))
-  (is (= '([-2 24]) (->> test-data (keep #(apply interval-at-y 10 %)) merge-intervals))))
+  (is (= '([-2 24]) (->> test-data (intervals-at-y 10) merge-intervals))))
 
 (deftest test-merge-intervals-count
   (is (= 8 (merge-intervals-count '([0 0] [2 5] [2 6] [8 9]))))
@@ -70,6 +70,7 @@
   (is (every? #(= 7 %)
               (for [l (range 0 7), r (range l 7)]
                 (merge-intervals-count (list [0 4] [2 6] [l r])))))
-  (is (= 27 (->> test-data (keep #(apply interval-at-y 10 %)) merge-intervals-count))))
+  (is (= 27 (->> test-data (intervals-at-y 10) merge-intervals-count))))
 
-
+(deftest test-answer1
+  (is (= 26 (answer1 10 test-data))))

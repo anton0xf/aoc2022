@@ -39,6 +39,9 @@
     (if (<= 0 ry)
       [(- sx ry) (+ sx ry)])))
 
+(defn intervals-at-y [y data]
+  (keep #(apply interval-at-y y %) data))
+
 (defn in-interval? [x [l r]] (<= l x r))
 
 ;; inefficient reference implementation
@@ -84,15 +87,26 @@
        (map (fn [[l r]] (inc (- r l))))
        (reduce +)))
 
+(defn answer1 [y data]
+  (let [is (intervals-at-y y data)
+        n (merge-intervals-count is)
+        bs (map second data)
+        bn (->> bs (filter #(= y (second %))) set count)]
+    (- n bn)))
+
 (comment
   (first test-data)
   ;; => [[2 18] [-2 15]]
 
-  (->> test-data (keep #(apply interval-at-y 10 %)))
+  (->> test-data (intervals-at-y 10))
   ;; => ([12 12] [2 14] [2 2] [-2 2] [16 24] [14 18])
 
-  (->> test-data (keep #(apply interval-at-y 10 %))
-       merge-intervals)
-  ;; => #{-2 2 12 14 16 18 24}
+  (->> test-data (intervals-at-y 10) merge-intervals)
+  ;; => [[-2 24]]
+
+  (def data
+    (with-open [in (io/reader (io/resource "day15/input.txt"))]
+      (vec (parse-input in))))
+  (answer1 2000000 data) ;; => 5688618
   )
 
