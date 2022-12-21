@@ -58,29 +58,18 @@
   (let [ls (group-by first is)
         rs (group-by second is)
         xs (into (sorted-set) (concat (keys ls) (keys rs)))]
-    ;; (println "ls:" ls "rs:" rs "xs:" xs)
     (loop [xs xs, oc 0, l nil, res []]
-      ;; (println "xs:" xs "oc:" oc "l:" l "res:" res)
-      (assert (<= 0 oc))
-      (assert (or (and (pos? oc) l)
-                  (and (zero? oc) (nil? l))))
-      (if (empty? xs)
-        (do (assert (nil? l) (format "l: %d" l))
-            (assert (zero? oc))
-            res)
-        (let [x (first xs), xs (rest xs)
-              l? (seq (get ls x))
-              r? (seq (get rs x))
-              oc (-> oc
-                     (+ (count (get ls x [])))
-                     (- (count (get rs x []))))
-              l (if l? (or l x) l)]
-          (assert (<= 0 oc))
-          (cond (and r? (zero? oc)) (recur xs oc nil (conj res [l x]))
-                r? (do (assert (pos? oc))
-                       (recur xs oc l res))
-                :else (do (assert (seq (get ls x)) (format "x: %s, ls: %s" x ls))
-                          (recur xs oc l res))))))))
+      (if (empty? xs) res
+          (let [x (first xs), xs (rest xs)
+                l? (seq (get ls x))
+                r? (seq (get rs x))
+                oc (-> oc
+                       (+ (count (get ls x [])))
+                       (- (count (get rs x []))))
+                l (if l? (or l x) l)]
+            (cond (and r? (zero? oc)) (recur xs oc nil (conj res [l x]))
+                  r? (recur xs oc l res)
+                  :else (recur xs oc l res)))))))
 
 (defn merge-intervals-count [is]
   (->> (merge-intervals is)
