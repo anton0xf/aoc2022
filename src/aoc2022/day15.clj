@@ -54,22 +54,28 @@
          (filter (fn [x] (some #(in-interval? x %) intervals)))
          count)))
 
+(defn merge-intervals-iter [xs oc l res [ls rs]]
+  (if (empty? xs) res
+      (let [x (first xs), xs (rest xs)
+            l? (seq (get ls x))
+            r? (seq (get rs x))
+            oc (-> oc
+                   (+ (count (get ls x [])))
+                   (- (count (get rs x []))))
+            l (if l? (or l x) l)]
+        (cond (and r? (zero? oc)) (recur xs oc nil (conj res [l x]) [ls rs])
+              r? (recur xs oc l res [ls rs])
+              :else (recur xs oc l res [ls rs])))))
+
+(defn is-ls [is] (group-by first is))
+(defn is-rs [is] (group-by second is))
+(defn is-xs [ls rs] (into (sorted-set) (concat (keys ls) (keys rs))))
+
 (defn merge-intervals [is]
-  (let [ls (group-by first is)
-        rs (group-by second is)
-        xs (into (sorted-set) (concat (keys ls) (keys rs)))]
-    (loop [xs xs, oc 0, l nil, res []]
-      (if (empty? xs) res
-          (let [x (first xs), xs (rest xs)
-                l? (seq (get ls x))
-                r? (seq (get rs x))
-                oc (-> oc
-                       (+ (count (get ls x [])))
-                       (- (count (get rs x []))))
-                l (if l? (or l x) l)]
-            (cond (and r? (zero? oc)) (recur xs oc nil (conj res [l x]))
-                  r? (recur xs oc l res)
-                  :else (recur xs oc l res)))))))
+  (let [ls (is-ls is)
+        rs (is-rs is)
+        xs (is-xs ls rs)]
+    (merge-intervals-iter xs 0 nil [] [ls rs])))
 
 (defn merge-intervals-count [is]
   (->> (merge-intervals is)
@@ -145,6 +151,17 @@
   ;; => ()
   ;; "Elapsed time: 2208.33445 msecs"
 
+  ;; "Elapsed time: 2722.878631 msecs"
+  ;; |                                     :name |     :n |  :sum |  :q1 | :med |  :q3 |   :sd | :mad |
+  ;; |-------------------------------------------+--------+-------+------+------+------+-------+------|
+  ;; |                       #'clojure.core/into | 41 110 | 715ms |  5µs |  6µs |  6µs | 502µs |  1µs |
+  ;; | #'aoc2022.day15/search-possible-locations |      1 |  22µs | 22µs | 22µs | 22µs |   0µs |  0µs |
+  ;; |                     #'aoc2022.day15/is-ls | 40 001 |  1,5s!| 33µs | 35µs | 40µs |   8µs |  4µs |
+  ;; |                     #'aoc2022.day15/is-rs | 40 001 | 104ms |  2µs |  2µs |  3µs |   1µs |  0µs |
+  ;; |                     #'aoc2022.day15/is-xs | 40 001 | 314ms |  7µs |  7µs |  8µs |   3µs |  1µs |
+  ;; |      #'aoc2022.day15/merge-intervals-iter | 40 001 | 430ms | 10µs | 10µs | 12µs |   3µs |  1µs |
+  ;; |           #'aoc2022.day15/merge-intervals | 40 001 |  2,6s | 57µs | 63µs | 69µs |  13µs |  6µs |
+  ;; |             #'aoc2022.day15/is-complement | 40 001 |  2,7s | 59µs | 66µs | 72µs |  14µs |  6µs |
 
   )
 
