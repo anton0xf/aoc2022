@@ -109,7 +109,7 @@
 
 (defn search-possible-locations [[[x-min y-min] [x-max y-max]] data]
   (for [y (range y-min (inc y-max))
-        :let [cis (->> (intervals-at-y y data)
+        :let [cis (->> (intervals-at-y y data) doall
                        (is-complement [x-min x-max]))]
         :when (seq cis)]
     [y cis]))
@@ -151,17 +151,19 @@
   ;; => ()
   ;; "Elapsed time: 2208.33445 msecs"
 
-  ;; "Elapsed time: 2722.878631 msecs"
-  ;; |                                     :name |     :n |  :sum |  :q1 | :med |  :q3 |   :sd | :mad |
-  ;; |-------------------------------------------+--------+-------+------+------+------+-------+------|
-  ;; |                       #'clojure.core/into | 41 110 | 715ms |  5µs |  6µs |  6µs | 502µs |  1µs |
-  ;; | #'aoc2022.day15/search-possible-locations |      1 |  22µs | 22µs | 22µs | 22µs |   0µs |  0µs |
-  ;; |                     #'aoc2022.day15/is-ls | 40 001 |  1,5s!| 33µs | 35µs | 40µs |   8µs |  4µs |
-  ;; |                     #'aoc2022.day15/is-rs | 40 001 | 104ms |  2µs |  2µs |  3µs |   1µs |  0µs |
-  ;; |                     #'aoc2022.day15/is-xs | 40 001 | 314ms |  7µs |  7µs |  8µs |   3µs |  1µs |
-  ;; |      #'aoc2022.day15/merge-intervals-iter | 40 001 | 430ms | 10µs | 10µs | 12µs |   3µs |  1µs |
-  ;; |           #'aoc2022.day15/merge-intervals | 40 001 |  2,6s | 57µs | 63µs | 69µs |  13µs |  6µs |
-  ;; |             #'aoc2022.day15/is-complement | 40 001 |  2,7s | 59µs | 66µs | 72µs |  14µs |  6µs |
+  ;; "Elapsed time: 3068.779917 msecs"
+  ;; |                                     :name |     :n |  :sum |   :q1 |  :med |   :q3 |  :sd | :mad |
+  ;; |-------------------------------------------+--------+-------+-------+-------+-------+------+------|
+  ;; | #'aoc2022.day15/search-possible-locations |      1 | 209µs | 209µs | 209µs | 209µs |  0µs |  0µs |
+  ;; |            #'aoc2022.day15/intervals-at-y | 40 001 |  11ms |   0µs |   0µs |   0µs |  0µs |  0µs |
+  ;; |             #'aoc2022.day15/is-complement | 40 001 |  1,5s |  31µs |  37µs |  38µs | 86µs |  2µs |
+  ;; |           #'aoc2022.day15/merge-intervals | 40 001 |  1,4s |  29µs |  35µs |  36µs | 86µs |  2µs |
+  ;; |                     #'aoc2022.day15/is-ls | 40 001 | 218ms |   4µs |   5µs |   5µs | 35µs |  0µs |
+  ;; |                     #'aoc2022.day15/is-rs | 40 001 | 167ms |   4µs |   4µs |   4µs |  9µs |  0µs |
+  ;; |                     #'aoc2022.day15/is-xs | 40 001 | 346ms |   7µs |   8µs |   9µs | 50µs |  1µs |
+  ;; |                       #'clojure.core/into | 40 066 | 316ms |   5µs |   6µs |   6µs | 73µs |  0µs |
+  ;; |                   #'clojure.core/group-by | 80 002 | 241ms |   3µs |   3µs |   3µs |  3µs |  0µs |
+  ;; |      #'aoc2022.day15/merge-intervals-iter | 40 001 | 439ms |   9µs |  11µs |  12µs |  7µs |  1µs |
 
   )
 
