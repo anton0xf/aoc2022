@@ -94,6 +94,37 @@
         bn (->> bs (filter #(= y (second %))) set count)]
     (- n bn)))
 
+;; part2
+(defn is-complement [[l r] is]
+  (loop [l l
+         is (merge-intervals is)
+         res []]
+    ;; (println "l:" l "is:" is "res:" res)
+    (if (empty? is) (conj res [l r])
+        (let [[il ir] (first is), is (rest is)]
+          (cond (< ir l) (recur l is res)
+                (< r il) (conj res [l r])
+                (<= il l r ir) []
+                (<= il l) (do (assert (and (<= l ir) (< ir r)))
+                              (recur (inc ir) is res))
+                (<= r ir) (do (assert (and (< l il) (<= il r)))
+                              (conj res [l (dec il)]))
+                :else (do (assert (and (< l il) (< ir r)))
+                          (recur (inc ir) is (conj res [l (dec il)]))))))))
+
+(defn search-possible-locations [[[x-min y-min] [x-max y-max]] data]
+  (for [y (range y-min (inc y-max))
+        :let [cis (->> (intervals-at-y y data)
+                       (is-complement [x-min x-max]))]
+        :when (seq cis)]
+    [y cis]))
+
+(defn answer2 [bs data]
+  (match (search-possible-locations bs data)
+         ([[y [[x xr]]]] :seq)
+         (do (assert (= x xr))
+             [x y (+ y (* 4000000 x))])))
+
 (comment
   (first test-data)
   ;; => [[2 18] [-2 15]]
@@ -108,5 +139,23 @@
     (with-open [in (io/reader (io/resource "day15/input.txt"))]
       (vec (parse-input in))))
   (answer1 2000000 data) ;; => 5688618
+
+  ;; part2
+  
+  ;; In the example the x and y coordinates can each be at most 20
+  (search-possible-locations [[0 0] [20 20]] test-data) ;; => ([11 [[14 14]]])
+
+  (answer2 [[0 0] [20 20]] test-data) ;; => [14 11 56000011]
+  
+  ;; the distress beacon must have x and y coordinates each no lower than 0 and no larger than 4_000_000
+  (time (answer2 [[0 0] [4000000 4000000]] data))
+  ;; "Elapsed time: 290444.516162 msecs" :(
+  ;; => [3156345 3204261 12625383204261]
+
+  (time (doall (search-possible-locations [[0 0] [4000000 40000]] data)))
+  ;; => ()
+  ;; "Elapsed time: 2208.33445 msecs"
+
+
   )
 

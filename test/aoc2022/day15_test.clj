@@ -74,3 +74,18 @@
 
 (deftest test-answer1
   (is (= 26 (answer1 10 test-data))))
+
+(deftest test-is-complement
+  (is (= [] (is-complement [0 5] '([-1 6]))))
+  (is (= [] (is-complement [0 5] '([0 5]))))
+  (is (= [] (is-complement [0 5] '([0 6]))))
+  (is (= [] (is-complement [0 5] '([-1 5]))))
+  (is (= [[5 5]] (is-complement [0 5] '([-1 4]))))
+  (is (= [[0 0]] (is-complement [0 5] '([1 5]))))
+  (is (= [[2 2]] (is-complement [0 5] '([0 1] [3 5]))))
+  (is (= [[2 3]] (is-complement [0 5] '([0 1] [4 5]))))
+  (is (= [] (is-complement [0 5] '([0 1] [1 4] [4 5]))))
+  (is (= [[1 1] [4 4]] (is-complement [0 5] '([0 0] [2 3] [5 5])))))
+
+(deftest test-answer2
+  (is (= [14 11 56000011] (answer2 [[0 0] [20 20]] test-data))))
