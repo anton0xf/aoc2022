@@ -57,18 +57,18 @@
 (defn merge-intervals-iter [xs oc l res [ls rs]]
   (if (empty? xs) res
       (let [x (first xs), xs (rest xs)
-            l? (seq (get ls x))
-            r? (seq (get rs x))
+            l? (pos? (get ls x 0))
+            r? (pos? (get rs x 0))
             oc (-> oc
-                   (+ (count (get ls x [])))
-                   (- (count (get rs x []))))
+                   (+ (get ls x 0))
+                   (- (get rs x 0)))
             l (if l? (or l x) l)]
         (cond (and r? (zero? oc)) (recur xs oc nil (conj res [l x]) [ls rs])
               r? (recur xs oc l res [ls rs])
               :else (recur xs oc l res [ls rs])))))
 
-(defn is-ls [is] (group-by first is))
-(defn is-rs [is] (group-by second is))
+(defn is-ls [is] (->> is (map first) frequencies))
+(defn is-rs [is] (->> is (map second) frequencies))
 (defn is-xs [ls rs] (into (sorted-set) (concat (keys ls) (keys rs))))
 
 (defn merge-intervals [is]
