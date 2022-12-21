@@ -165,5 +165,32 @@
   ;; |                   #'clojure.core/group-by | 80 002 | 241ms |   3µs |   3µs |   3µs |  3µs |  0µs |
   ;; |      #'aoc2022.day15/merge-intervals-iter | 40 001 | 439ms |   9µs |  11µs |  12µs |  7µs |  1µs |
 
+  (let [[[x-min y-min] [x-max y-max]] [[0 0] [4000000 4000000]]]
+    (->> (for [y (range x-min (inc y-max))]
+           (->> (intervals-at-y y data) count))
+         (group-by identity)
+         (map (fn [[k vs]] [k (count vs)]))
+         (sort-by first)))
+  ;; => ([ 4   38892]
+  ;;     [ 5 1311055]
+  ;;     [ 6  538955]
+  ;;     [ 7  879508]
+  ;;     [ 8  341367]
+  ;;     [ 9  135677]
+  ;;     [10  106349]
+  ;;     [11  152943]
+  ;;     [12   61932]
+  ;;     [13  314848]
+  ;;     [14   66511]
+  ;;     [15   51964])
+
+  (let [[[x-min y-min] [x-max y-max]] [[0 0] [4000000 40000]]]
+    (->> (for [y (range x-min (inc y-max))]
+           (->> (intervals-at-y y data) count))
+         (group-by identity)
+         (map (fn [[k vs]] [k (count vs)]))
+         (sort-by first)))
+  ;; => ([4 38892] [5 1109])
+
   )
 
