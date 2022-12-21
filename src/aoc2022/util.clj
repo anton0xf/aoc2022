@@ -1,9 +1,25 @@
-(ns aoc2022.util)
+(ns aoc2022.util
+  (:require [clojure.string :as str]))
 
-(defn get-bounds [gap ps]
-  (let [bounds-fn (fn [map-fn reduce-fn result-fn]
-                    (->> ps (map map-fn) (reduce reduce-fn) (result-fn gap)))]
-    [[(bounds-fn first min #(- %2 %1))
-      (bounds-fn second min #(- %2 %1))]
-     [(bounds-fn first max +)
-      (bounds-fn second max +)]]))
+(defn bounds [gap ps]
+  [[(->> ps (map first) (reduce min) (#(- % gap)))
+    (->> ps (map second) (reduce min) (#(- % gap)))]
+   [(->> ps (map first) (reduce max) (+ gap))
+    (->> ps (map second) (reduce max) (+ gap))]])
+
+(defn in-bounds? [[x y] [[x-min y-min] [x-max y-max]]]
+  (and (<= x-min x x-max)
+       (<= y-min y y-max)))
+
+(def p-zero [0 0])
+(defn p-plus [p1 p2] (mapv + p1 p2))
+(defn p-minus [p1 p2] (mapv - p1 p2))
+
+(defn scalar-direction [d]
+  (if (= 0 d) 0
+      (/ d (abs d))))
+
+(defn direction-to [p0 p1]
+  (let [r (p-minus p1 p0)]
+    (if (= p-zero r) p-zero
+        (mapv scalar-direction r))))
